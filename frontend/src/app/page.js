@@ -124,6 +124,13 @@ export default function PhotographerPage() {
               Tempel
             </button>
           </div>
+          <label
+            htmlFor="drive-link"
+            className="text-sm font-semibold text-ink"
+          >
+            Maksimal foto dipilih
+          </label>
+
           <div className="mt-2 flex gap-2">
             <input
               id="quota"
