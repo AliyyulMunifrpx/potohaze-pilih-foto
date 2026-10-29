@@ -1,10 +1,8 @@
 import { Zip, ZipPassThrough } from "fflate";
 
-export const runtime = "nodejs";
 // 300 detik butuh Fluid compute (default di project Vercel baru).
 // Kalau build protes soal batas durasi, ganti jadi 60.
 export const maxDuration = 300;
-
 const MAX_FILES = 100;
 const ID_PATTERN = /^[a-zA-Z0-9_-]+$/;
 
