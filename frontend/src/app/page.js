@@ -22,7 +22,7 @@ export default function PhotographerPage() {
   const [copied, setCopied] = useState(false);
   const [copyError, setCopyError] = useState(false);
   const resultRef = useRef(null);
-
+  const [quota, setQuota] = useState(0);
   const trimmed = driveLink.trim();
   const folderId = useMemo(() => extractFolderId(trimmed), [trimmed]);
 
@@ -49,7 +49,7 @@ export default function PhotographerPage() {
     setCopied(false);
     setCopyError(false);
     setResult(
-      `${window.location.origin}/pilih?folder=${folderId}&wa=${WA_NUMBER}`,
+      `${window.location.origin}/pilih?folder=${folderId}&wa=${WA_NUMBER}&quota=${quota}`,
     );
   };
 
@@ -123,6 +123,23 @@ export default function PhotographerPage() {
             >
               Tempel
             </button>
+          </div>
+          <div className="mt-2 flex gap-2">
+            <input
+              id="quota"
+              type="number"
+              inputMode="number"
+              autoComplete="off"
+              spellCheck={false}
+              value={quota}
+              onChange={(e) => setQuota(e.target.value)}
+              placeholder="10"
+              aria-invalid={invalid}
+              aria-describedby="drive-hint"
+              className={`min-w-0 flex-1 rounded-xl border bg-sheet px-3.5 py-3 text-base text-ink placeholder:text-muted/70 ${focusRing} ${
+                invalid ? "border-danger" : "border-line"
+              }`}
+            />
           </div>
 
           <p
