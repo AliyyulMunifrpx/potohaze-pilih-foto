@@ -381,7 +381,7 @@ function Picker() {
   // kuota dari link; kosong atau tidak valid = tanpa batas
   const quotaNum = useMemo(() => {
     const n = parseInt(quotaParam ?? "", 10);
-    return Number.isFinite(n) && n > 0 ? n : null;
+    return Number.isFinite(n) && n > 0 ? n : 10;
   }, [quotaParam]);
 
   // ambil daftar foto
