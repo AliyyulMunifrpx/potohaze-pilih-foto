@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
 const focusRing =
@@ -9,9 +9,35 @@ const focusRing =
 // batas aman panjang URL wa.me; lewat dari ini sebaiknya daftar disalin manual
 const WA_URL_SOFT_LIMIT = 1800;
 
+// harus sama dengan MAX_FILES di app/api/zip/route.js
+const MAX_ZIP = 100;
+
+const driveDownloadUrl = (id) =>
+  `https://drive.google.com/uc?export=download&id=${id}`;
+
+function DownloadIcon() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="none"
+      aria-hidden="true"
+    >
+      <path
+        d="M8 2.5v7m0 0L5 6.75M8 9.5l3-2.75M3 12.5h10"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 function Shell({ children }) {
   return (
-    <main className="mx-auto w-full max-w-6xl px-4 py-8 pb-48 sm:px-6 sm:py-12 sm:pb-32">
+    <main className="mx-auto w-full max-w-6xl px-4 py-8 pb-56 sm:px-6 sm:py-12 sm:pb-32">
       {children}
     </main>
   );
@@ -52,6 +78,8 @@ function Picker() {
   const [error, setError] = useState("");
   const [ready, setReady] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [zipping, setZipping] = useState(false);
+  const zipFormRef = useRef(null);
 
   const storageKey = `selected:${folder}`;
 
@@ -130,6 +158,13 @@ function Picker() {
     } catch {}
   };
 
+  const startZip = () => {
+    if (count < 2 || count > MAX_ZIP || zipping) return;
+    setZipping(true);
+    zipFormRef.current?.submit();
+    setTimeout(() => setZipping(false), 8000);
+  };
+
   if (loading) {
     return (
       <Shell>
@@ -173,11 +208,23 @@ function Picker() {
     );
   }
 
-  const note = !wa
-    ? "Nomor WhatsApp fotografer tidak ada di link ini. Minta link baru ke fotografer."
-    : tooLong
-      ? "Daftar cukup panjang. Kalau pesan WhatsApp terpotong, tekan Salin daftar lalu tempel di chat."
-      : "";
+  const notes = [];
+  if (!wa) {
+    notes.push(
+      "Nomor WhatsApp fotografer tidak ada di link ini. Minta link baru ke fotografer.",
+    );
+  } else if (tooLong) {
+    notes.push(
+      "Daftar cukup panjang. Kalau pesan WhatsApp terpotong, tekan Salin daftar lalu tempel di chat.",
+    );
+  }
+  if (count > MAX_ZIP) {
+    notes.push(
+      `ZIP maksimal ${MAX_ZIP} foto per unduhan. Kurangi pilihan atau unduh bertahap.`,
+    );
+  }
+
+  const downloadClass = `inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-line px-4 py-2.5 text-sm font-semibold text-ink transition-colors hover:bg-lightbox disabled:cursor-not-allowed disabled:text-muted disabled:hover:bg-transparent sm:flex-none ${focusRing}`;
 
   return (
     <Shell>
@@ -259,34 +306,77 @@ function Picker() {
         })}
       </ul>
 
+      {/* form tersembunyi: ZIP diunduh lewat iframe supaya halaman tidak berpindah */}
+      <form
+        ref={zipFormRef}
+        method="post"
+        action="/api/zip"
+        target="zip-frame"
+        hidden
+      >
+        <input type="hidden" name="folder" value={folder ?? ""} />
+        <input
+          type="hidden"
+          name="ids"
+          value={JSON.stringify(chosen.map((p) => p.id))}
+        />
+      </form>
+      <iframe name="zip-frame" title="Unduhan ZIP" hidden tabIndex={-1} />
+
       <div className="fixed inset-x-0 bottom-0 z-10 border-t border-line bg-sheet/95 backdrop-blur">
         <div className="mx-auto w-full max-w-6xl px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:px-6">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-center justify-between gap-3 sm:justify-start sm:gap-4">
+            <div className="flex items-center justify-between gap-4 sm:justify-start">
               <p aria-live="polite" className="text-sm font-semibold text-ink">
                 {count === 0
                   ? "Belum ada foto dipilih"
                   : `${count} foto dipilih`}
               </p>
-              <button
-                type="button"
-                onClick={() => setSelected(new Set())}
-                disabled={count === 0}
-                className={`rounded text-sm font-medium text-muted underline underline-offset-4 hover:text-ink disabled:hidden ${focusRing}`}
-              >
-                Hapus pilihan
-              </button>
+              {count > 0 && (
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setSelected(new Set())}
+                    className={`rounded text-sm font-medium text-muted underline underline-offset-4 hover:text-ink ${focusRing}`}
+                  >
+                    Hapus pilihan
+                  </button>
+                  <button
+                    type="button"
+                    onClick={copyList}
+                    className={`rounded text-sm font-medium text-muted underline underline-offset-4 hover:text-ink ${focusRing}`}
+                  >
+                    {copied ? "Daftar tersalin" : "Salin daftar"}
+                  </button>
+                </div>
+              )}
             </div>
 
             <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={copyList}
-                disabled={count === 0}
-                className={`flex-1 rounded-xl border border-line px-4 py-2.5 text-sm font-semibold text-ink transition-colors hover:bg-lightbox disabled:cursor-not-allowed disabled:text-muted disabled:hover:bg-transparent sm:flex-none ${focusRing}`}
-              >
-                {copied ? "Daftar tersalin" : "Salin daftar"}
-              </button>
+              {count === 1 ? (
+                <a
+                  href={driveDownloadUrl(chosen[0].id)}
+                  rel="noopener noreferrer"
+                  className={downloadClass}
+                >
+                  <DownloadIcon />
+                  Unduh foto
+                </a>
+              ) : (
+                <button
+                  type="button"
+                  onClick={startZip}
+                  disabled={count === 0 || count > MAX_ZIP || zipping}
+                  className={downloadClass}
+                >
+                  <DownloadIcon />
+                  {zipping
+                    ? "Menyiapkan ZIP..."
+                    : count > 1
+                      ? "Unduh ZIP"
+                      : "Unduh foto"}
+                </button>
+              )}
               <button
                 type="button"
                 onClick={sendWa}
@@ -298,9 +388,20 @@ function Picker() {
             </div>
           </div>
 
-          {note && (
-            <p className="mt-2 text-xs leading-relaxed text-muted">{note}</p>
+          {zipping && (
+            <p
+              role="status"
+              className="mt-2 text-xs leading-relaxed text-muted"
+            >
+              ZIP sedang disiapkan dan akan muncul di unduhan browser. Untuk
+              banyak foto, ini bisa butuh beberapa menit.
+            </p>
           )}
+          {notes.map((n) => (
+            <p key={n} className="mt-2 text-xs leading-relaxed text-muted">
+              {n}
+            </p>
+          ))}
         </div>
       </div>
     </Shell>
