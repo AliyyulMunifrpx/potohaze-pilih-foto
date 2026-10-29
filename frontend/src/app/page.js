@@ -2,8 +2,8 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 
-const WA_NUMBER = "6282329475745";
-const WA_DISPLAY = "+62 823-2947-5745";
+const WA_NUMBER = "6285179919500";
+const WA_DISPLAY = "+62 851-7991-9500";
 
 function extractFolderId(input) {
   const match =
