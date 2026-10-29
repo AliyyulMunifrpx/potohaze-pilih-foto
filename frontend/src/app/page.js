@@ -22,7 +22,7 @@ export default function PhotographerPage() {
   const [copied, setCopied] = useState(false);
   const [copyError, setCopyError] = useState(false);
   const resultRef = useRef(null);
-  const [quota, setQuota] = useState(0);
+  const [quota, setQuota] = useState(10);
   const trimmed = driveLink.trim();
   const folderId = useMemo(() => extractFolderId(trimmed), [trimmed]);
 
@@ -128,7 +128,7 @@ export default function PhotographerPage() {
             htmlFor="drive-link"
             className="text-sm font-semibold text-ink"
           >
-            Maksimal foto dipilih
+            Maksimal foto dipilih (default 10)
           </label>
 
           <div className="mt-2 flex gap-2">
